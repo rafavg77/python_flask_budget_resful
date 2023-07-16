@@ -1,5 +1,5 @@
 import datetime
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_restful import Api, Resource
 from sqlalchemy.exc import NoResultFound
@@ -49,7 +49,7 @@ class AccountSchema(Schema):
     account_id = fields.Int(dump_only=True)
     name =  fields.Str(required=True, validate=must_not_be_blank)
     type = fields.Str(required=True, validate=must_not_be_blank)
-    status =  fields.Bool(required=True, validate=must_not_be_blank)
+    status =  fields.Bool()
     bank = fields.Nested(BankSchema,valitate=must_not_be_blank)
 
     @pre_load
@@ -67,10 +67,10 @@ accounts_schema = AccountSchema(many=True)
 
 ## API ##
 
-class BankResource(Resource):
-    def get(self,bank_id):
-        bank = Bank.query.get_or_404(bank_id)
-        return bank_schema.dump(bank)
+class BanksResource(Resource):
+    def get(self):
+        banks = Bank.query.all()
+        return banks_schema.dump(banks)
     
     def post(self):
         new_bank = Bank(
@@ -82,6 +82,11 @@ class BankResource(Resource):
         db.session.commit()
         return bank_schema.dump(new_bank)
     
+class BankResource(Resource):
+    def get(self,bank_id):
+        bank = Bank.query.get_or_404(bank_id)
+        return bank_schema.dump(bank)
+            
     def put(self, bank_id):
         bank = Bank.query.get_or_404(bank_id)
 
@@ -99,9 +104,39 @@ class BankResource(Resource):
         bank = Bank.query.get_or_404(bank_id)
         db.session.delete(bank)
         db.session.commit()
-        return "{'message' : 'Bank {} delteted'}".format(bank_id),204
+
+        return jsonify({
+            "message" : "Bank {} deleted successfuly".format(bank_id)
+            })
     
-api.add_resource(BankResource, '/bank')
+class AccountsResource(Resource):
+    def get(self):
+        accounts = Account.query.all()
+        return accounts_schema.dump(accounts)
+    
+    def post(self):
+
+        data = account_schema.load(request.json)
+        print(data)
+
+        new_account = Account(
+            name = data['name'],
+            type = data['type'],
+            status = data['status'],
+            bank = Bank.query.get_or_404(data['bank']['bank_id'])
+            #bank = data['bank']['bank_id']
+        )
+
+        db.session.add(new_account)
+        db.session.commit()
+        return account_schema.dump(new_account)
+    
+        #return "Cui"
+        
+
+api.add_resource(BanksResource, '/bank')
+api.add_resource(BankResource, '/bank/<int:bank_id>')
+api.add_resource(AccountsResource, '/accounts')
     
 if __name__ == "__main__":
     with app.app_context():
