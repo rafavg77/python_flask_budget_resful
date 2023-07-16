@@ -131,12 +131,42 @@ class AccountsResource(Resource):
         db.session.commit()
         return account_schema.dump(new_account)
     
-        #return "Cui"
+class AccountResource(Resource):
+    def get(self,account_id):
+        account = Account.query.get_or_404(account_id)
+        return account_schema.dump(account)
+    
+    def put(self,account_id):
+        account = Account.query.get_or_404(account_id)
+        print(account)
+
+        if 'name' in request.json:
+            account.name = request.json['name']
+        if 'type' in request.json:
+            account.type = request.json['type']
+        if 'status' in request.json:
+            account.status = request.json['status']
+        if 'bank' in request.json:
+            bank = Bank.query.get_or_404(request.json['bank'])
+            print(bank)
+            account.bank = bank
+        db.session.commit()
+
+        return account_schema.dump(account)
+    
+    def delete(self,account_id):
+        account = Account.query.get_or_404(account_id)
+        db.session.delete(account)
+        db.session.commit()
         
+        return jsonify({
+            "message" : "Account {} deleted successfuly".format(account_id)
+            })
 
 api.add_resource(BanksResource, '/bank')
 api.add_resource(BankResource, '/bank/<int:bank_id>')
 api.add_resource(AccountsResource, '/accounts')
+api.add_resource(AccountResource, '/account/<int:account_id>')
     
 if __name__ == "__main__":
     with app.app_context():
