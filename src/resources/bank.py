@@ -1,5 +1,5 @@
 from flask import request
-from flask_restplus import Resource, fields, Namespace
+from flask_restx import Resource, fields, Namespace
 
 from models.bank import BankModel
 from schemas.bank import BankSchema

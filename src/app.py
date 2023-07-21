@@ -1,6 +1,6 @@
 from flask import Flask, jsonify, Blueprint
-from werkzeug.utils import cached_property
-from flask_restplus import Api
+from flask_restx import Api
+#from flask_restplus import Api
 
 from db import db
 from ma import ma
